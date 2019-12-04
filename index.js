@@ -12,7 +12,8 @@ import {
   DialogTitle,
   ListItem,
   ListItemText,
-  ListItemAvatar
+  ListItemAvatar,
+  CircularProgress
 } from "@material-ui/core";
 import Deferred from "es6-deferred";
 import {
@@ -186,7 +187,6 @@ const useShowDialog = () => {
       setPost(post);
       setContentStyle(contentStyle);
       setScrollViewStyle(scrollViewStyle);
-
       setIsDialog(true);
       const promise = new Deferred();
       setPromise(promise);
@@ -212,5 +212,26 @@ const useShowDialog = () => {
   }, [dismissKey, promise]);
   return showDialog;
 };
+const useSpinner = () => {
+  const showDialog = useShowDialog();
+  const stopDialog = useAbortDialog();
+  const spinnerFunc = useCallback(() => {
+    showDialog({ message: <CircularProgress /> });
+    return stopDialog;
+  }, [showDialog, stopDialog]);
+  useEffect(
+    () => () => {
+      stopDialog();
+    },
+    []
+  );
+  return spinnerFunc;
+};
 export default DialogProvider;
-export { DialogProvider, useShowDialog, withDialog, useAbortDialog };
+export {
+  DialogProvider,
+  useShowDialog,
+  withDialog,
+  useAbortDialog,
+  useSpinner
+};
