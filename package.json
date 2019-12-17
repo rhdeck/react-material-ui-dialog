@@ -1,6 +1,6 @@
 {
   "name": "react-material-ui-dialog",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Easy-to-use dialog hook for material-ui",
   "main": "lib/index.js",
   "browser": "lib/index.umd.js",
