@@ -2,16 +2,34 @@
   "name": "react-material-ui-dialog",
   "version": "1.0.0",
   "description": "Easy-to-use dialog hook for material-ui",
-  "main": "index.js",
+  "main": "lib/index.js",
+  "browser": "lib/index.umd.js",
+  "module": "lib/index.es.js",
   "repository": "https://github.com/rhdeck/react-material-ui-dialog",
   "author": "Ray Deck",
   "license": "MIT",
   "peerDependencies": {
-    "react": "^16.12.0"
+    "@material-ui/core": "^4.7.1",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "react-material-ui-keyboard-badge": "https://github.com/rhdeck/react-material-ui-keyboard-badge"
   },
   "dependencies": {
-    "@material-ui/core": "^4.7.1",
-    "es6-deferred": "^1.3.0",
-    "react-material-ui-keyboard-badge": "https://github.com/rhdeck/react-material-ui-keyboard-badge"
+    "es6-deferred": "^1.3.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.7.4",
+    "@babel/preset-env": "^7.7.4",
+    "@babel/preset-react": "^7.7.4",
+    "node-watch": "^0.6.3",
+    "rollup": "^1.27.8",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-peer-deps-external": "^2.2.0"
+  },
+  "scripts": {
+    "build": "rollup -c && yarn pack -f package.tgz",
+    "watch": "node watch.js"
   }
 }
