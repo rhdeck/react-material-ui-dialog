@@ -55,7 +55,24 @@ const DialogProvider = ({ children }) => {
       disable("dialog");
     };
   }, [isDialog]);
-  const [value, setValue] = useState({});
+  const [value, setValue] = useState({
+    cancelText,
+    dismissKey,
+    clearDismiss,
+    isDialog,
+    setMessage,
+    setTitle,
+    setActions,
+    setCancelText,
+    setIsDialog,
+    setPre,
+    setPost,
+    setContentStyle,
+    setScrollViewStyle,
+    setIsDismissable,
+    isDismissable,
+    setDismissKey
+  });
   useEffect(() => {
     setValue({
       cancelText,
@@ -96,6 +113,7 @@ const DialogProvider = ({ children }) => {
   const Message = message;
   return [
     <Dialog
+      key="dialog"
       open={!!isDialog}
       onClose={() => {
         if (!isDismissable) return;
@@ -134,7 +152,7 @@ const DialogProvider = ({ children }) => {
               }
               const action = () => dismissDialog(key);
               return (
-                <ListItem onClick={action} key={index}>
+                <ListItem onClick={action} key={`dialog-item-${index}`}>
                   <KeyboardBadge
                     key={keyMap ? keyMap : index}
                     keyMap={keyMap}
@@ -158,7 +176,9 @@ const DialogProvider = ({ children }) => {
       </DialogContent>
       <DialogActions></DialogActions>
     </Dialog>,
-    <Provider value={value}>{children}</Provider>
+    <Provider key="provider" value={value}>
+      {children}
+    </Provider>
   ];
 };
 const withDialog = C => props => (
@@ -177,7 +197,7 @@ const useAbortDialog = () => {
     setMessage
   } = useContext(context);
   const abortDialog = useCallback(() => {
-    setIsDismissable(true);
+    setIsDismissable && setIsDismissable(true);
     setIsDialog(false);
     if (isDismissable) setDismissKey("_reject");
     setPre(null);
@@ -273,7 +293,7 @@ const useSpinner = () => {
     stopDialog();
   }, [isShowing]);
   const spinnerFunc = useCallback(() => {
-    setIsDismissable(false);
+    if (setIsDismissable) setIsDismissable(false);
     setIsShowing(true);
     const promise = showDialog({
       message: () => (
