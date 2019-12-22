@@ -203,7 +203,14 @@ const useAbortDialog = () => {
     setPre(null);
     setMessage(null);
     setPost(null);
-  }, [isDismissable]);
+  }, [
+    isDismissable,
+    setIsDismissable,
+    setIsDialog,
+    setPre,
+    setPost,
+    setMessage
+  ]);
   return abortDialog;
 };
 const useShowDialog = () => {
@@ -218,7 +225,8 @@ const useShowDialog = () => {
     setPre,
     setPost,
     setContentStyle,
-    setScrollViewStyle
+    setScrollViewStyle,
+    setIsDismissable
   } = useContext(context);
   const showDialog = useCallback(
     async (
@@ -230,7 +238,8 @@ const useShowDialog = () => {
         pre = null,
         post = null,
         contentStyle = {},
-        scrollViewStyle = { maxHeight: 300 }
+        scrollViewStyle = { maxHeight: 300 },
+        isDismissable = true
       },
       callback = null
     ) => {
@@ -244,6 +253,7 @@ const useShowDialog = () => {
         setContentStyle(contentStyle);
         setScrollViewStyle(scrollViewStyle);
         setIsDialog(true);
+        setIsDismissable(isDismissable);
         const deferred = new Deferred();
         setPromise(deferred);
         const outkey = await deferred.promise;
@@ -254,30 +264,36 @@ const useShowDialog = () => {
         throw "Dismissd dialog without accepted result";
       }
     },
-    []
+    [
+      setTitle,
+      setCancelText,
+      setActions,
+      setMessage,
+      setPre,
+      setPost,
+      setContentStyle,
+      setScrollViewStyle,
+      setPromise,
+      setContentStyle,
+      setIsDismissable
+    ]
   );
-  const [promise, setPromise] = useState();
+  const [promise, setPromise] = useState(null);
   useEffect(() => {
     console.log(
       "Hit useeffect with dismissKey (maybe promise changed too) ",
       dismissKey,
       promise
     );
-    if (!promise) {
-      console.log("Promise null - aborting");
-      return;
-    }
-
+    if (!promise) return;
     if (dismissKey === "_reject") {
       promise.reject("dismisskey was _reject");
       clearDismiss();
       setPromise(null);
-      console.log("clearing promise from reject");
-    } else if (dismissKey !== null) {
+    } else if (dismissKey !== null && typeof dismissKey !== "undefined") {
       promise.resolve(dismissKey);
       clearDismiss();
       setPromise(null);
-      console.log("Clearing promise from good key value", dismissKey);
     }
   }, [dismissKey, promise]);
   return showDialog;
@@ -293,9 +309,9 @@ const useSpinner = () => {
     stopDialog();
   }, [isShowing]);
   const spinnerFunc = useCallback(() => {
-    if (setIsDismissable) setIsDismissable(false);
     setIsShowing(true);
     const promise = showDialog({
+      isDismissable: false,
       message: () => (
         <Grid container justify="center">
           <Grid item>
@@ -305,8 +321,8 @@ const useSpinner = () => {
       )
     });
     promise.then(
-      () => {},
-      () => {}
+      () => setIsDismissable(true),
+      () => setIsDismissable(true)
     );
     return stop;
   }, [showDialog, stop]);
