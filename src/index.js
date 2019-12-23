@@ -152,7 +152,7 @@ const DialogProvider = ({ children }) => {
               }
               const action = () => dismissDialog(key);
               return (
-                <ListItem onClick={action} key={`dialog-item-${index}`}>
+                <ListItem button onClick={action} key={`dialog-item-${index}`}>
                   <KeyboardBadge
                     key={keyMap ? keyMap : index}
                     keyMap={keyMap}
