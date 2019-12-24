@@ -183,7 +183,7 @@ const DialogProvider = ({ children }) => {
             }
           )}
       </DialogContent>
-      {dialogActions.length && (
+      {!!dialogActions.length && (
         <DialogActions>{dialogActions.map(action => {})}</DialogActions>
       )}
     </Dialog>,
