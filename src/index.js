@@ -31,6 +31,7 @@ const DialogProvider = ({ children }) => {
   const [post, setPost] = useState();
   const [title, setTitle] = useState();
   const [actions, setActions] = useState([]);
+  const [dialogActions, setDialogActions] = useState([]);
   const [cancelText, setCancelText] = useState("cancel");
   const [dismissKey, setDismissKey] = useState();
   const [contentStyle, setContentStyle] = useState({});
@@ -42,19 +43,24 @@ const DialogProvider = ({ children }) => {
   }, []);
   const [isDismissable, setIsDismissable] = useState(true);
   const { enableOthers, disableOthers, enable, disable } = useKeyboardScopes();
+  const [disabledSimple, setDisabledSimple] = useState(false);
   useEffect(() => {
-    if (isDialog) {
+    if (isDialog && !disabledSimple) {
       disableOthers("dialog");
       enable("dialog");
-    } else {
+      setDisabledSimple(true);
+    } else if (!isDialog && disabledSimple) {
       enableOthers("dialog");
       disable("dialog");
+      setDisabledSimple(false);
     }
     return () => {
-      enableOthers("dialog");
-      disable("dialog");
+      if (disabledSimple) {
+        enableOthers("dialog");
+        disable("dialog");
+      }
     };
-  }, [isDialog]);
+  }, [disabledSimple, isDialog]);
   const [value, setValue] = useState({
     cancelText,
     dismissKey,
@@ -71,7 +77,8 @@ const DialogProvider = ({ children }) => {
     setScrollViewStyle,
     setIsDismissable,
     isDismissable,
-    setDismissKey
+    setDismissKey,
+    setDialogActions
   });
   useEffect(() => {
     setValue({
@@ -90,7 +97,8 @@ const DialogProvider = ({ children }) => {
       setScrollViewStyle,
       setIsDismissable,
       isDismissable,
-      setDismissKey
+      setDismissKey,
+      setDialogActions
     });
   }, [
     cancelText,
@@ -108,7 +116,8 @@ const DialogProvider = ({ children }) => {
     setScrollViewStyle,
     setIsDismissable,
     isDismissable,
-    setDismissKey
+    setDismissKey,
+    setDialogActions
   ]);
   const Message = message;
   return [
@@ -122,7 +131,7 @@ const DialogProvider = ({ children }) => {
       }}
     >
       {title && <DialogTitle>{title}</DialogTitle>}
-      <DialogContent>
+      <DialogContent style={contentStyle}>
         {pre}
         {!message ? null : typeof message === "String" ? (
           <DialogContentText>{message}</DialogContentText>
@@ -174,7 +183,9 @@ const DialogProvider = ({ children }) => {
             }
           )}
       </DialogContent>
-      <DialogActions></DialogActions>
+      {dialogActions.length && (
+        <DialogActions>{dialogActions.map(action => {})}</DialogActions>
+      )}
     </Dialog>,
     <Provider key="provider" value={value}>
       {children}
@@ -220,6 +231,7 @@ const useShowDialog = () => {
     setMessage,
     setTitle,
     setActions,
+    setDialogActions,
     setCancelText,
     setIsDialog,
     setPre,
@@ -239,7 +251,8 @@ const useShowDialog = () => {
         post = null,
         contentStyle = {},
         scrollViewStyle = { maxHeight: 300 },
-        isDismissable = true
+        isDismissable = true,
+        dialogActions = []
       },
       callback = null
     ) => {
@@ -254,6 +267,7 @@ const useShowDialog = () => {
         setScrollViewStyle(scrollViewStyle);
         setIsDialog(true);
         setIsDismissable(isDismissable);
+        setDialogActions(dialogActions);
         const deferred = new Deferred();
         setPromise(deferred);
         const outkey = await deferred.promise;
@@ -261,6 +275,7 @@ const useShowDialog = () => {
         if (typeof callback === "function") return callback(outkey);
         return outkey;
       } catch (e) {
+        console.log(e);
         throw "Dismissd dialog without accepted result";
       }
     },
@@ -275,16 +290,12 @@ const useShowDialog = () => {
       setScrollViewStyle,
       setPromise,
       setContentStyle,
-      setIsDismissable
+      setIsDismissable,
+      setDialogActions
     ]
   );
   const [promise, setPromise] = useState(null);
   useEffect(() => {
-    console.log(
-      "Hit useeffect with dismissKey (maybe promise changed too) ",
-      dismissKey,
-      promise
-    );
     if (!promise) return;
     if (dismissKey === "_reject") {
       promise.reject("dismisskey was _reject");
