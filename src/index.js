@@ -6,6 +6,7 @@ import React, {
   useCallback
 } from "react";
 import {
+  Button,
   Dialog,
   DialogActions,
   DialogContent,
@@ -170,8 +171,16 @@ const DialogProvider = ({ children }) => {
                     scope="dialog"
                     action={action}
                     enabled={!hidden}
+                    invisible={true}
                   >
-                    {icon && (
+                    {keyMap &
+                    (
+                      <ListItemAvatar>
+                        <Avatar>{keyMap}</Avatar>
+                      </ListItemAvatar>
+                    )}
+                    {icon &
+                    (
                       <ListItemAvatar>
                         <Avatar>{icon}</Avatar>
                       </ListItemAvatar>
@@ -184,7 +193,11 @@ const DialogProvider = ({ children }) => {
           )}
       </DialogContent>
       {!!dialogActions.length && (
-        <DialogActions>{dialogActions.map(action => {})}</DialogActions>
+        <DialogActions>
+          {dialogActions.map(({ key, title }) => (
+            <Button onClick={() => dismissDialog(key)}>{title}</Button>
+          ))}
+        </DialogActions>
       )}
     </Dialog>,
     <Provider key="provider" value={value}>
@@ -354,7 +367,7 @@ const useAreYouSure = () => {
       ...props
     } = {}) => {
       const result = await showDialog({
-        actions: [
+        dialogActions: [
           {
             title: yesText,
             key: "yes"
