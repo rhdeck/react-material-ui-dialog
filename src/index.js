@@ -6,6 +6,7 @@ import React, {
   useCallback
 } from "react";
 import {
+  Avatar,
   Button,
   Dialog,
   DialogActions,
@@ -22,6 +23,8 @@ import {
   useKeyboardScopes,
   KeyboardBadge
 } from "react-material-ui-keyboard-badge";
+const CUSTOM = "__CUSTOM";
+const REJECT = "__REJECT";
 const context = createContext();
 const { Provider } = context;
 
@@ -38,10 +41,15 @@ const DialogProvider = ({ children }) => {
   const [contentStyle, setContentStyle] = useState({});
   const [scrollViewStyle, setScrollViewStyle] = useState({ maxHeight: 300 });
   const clearDismiss = useCallback(() => setDismissKey(null), []);
-  const dismissDialog = useCallback(key => {
-    setDismissKey(key);
-    setIsDialog(false);
-  }, []);
+  const [state, setState] = useState({});
+  const dismissDialog = useCallback(
+    key => {
+      if (key === CUSTOM) setDismissKey(state);
+      else setDismissKey(key);
+      setIsDialog(false);
+    },
+    [state]
+  );
   const [isDismissable, setIsDismissable] = useState(true);
   const { enableOthers, disableOthers, enable, disable } = useKeyboardScopes();
   const [disabledSimple, setDisabledSimple] = useState(false);
@@ -79,7 +87,9 @@ const DialogProvider = ({ children }) => {
     setIsDismissable,
     isDismissable,
     setDismissKey,
-    setDialogActions
+    setDialogActions,
+    setState,
+    state
   });
   useEffect(() => {
     setValue({
@@ -99,7 +109,9 @@ const DialogProvider = ({ children }) => {
       setIsDismissable,
       isDismissable,
       setDismissKey,
-      setDialogActions
+      setDialogActions,
+      setState,
+      state
     });
   }, [
     cancelText,
@@ -118,7 +130,9 @@ const DialogProvider = ({ children }) => {
     setIsDismissable,
     isDismissable,
     setDismissKey,
-    setDialogActions
+    setDialogActions,
+    setState,
+    state
   ]);
   const Message = message;
   return [
@@ -128,7 +142,7 @@ const DialogProvider = ({ children }) => {
       onClose={() => {
         if (!isDismissable) return;
         setIsDialog(false);
-        setDismissKey("_reject");
+        setDismissKey(REJECT);
       }}
     >
       {title && <DialogTitle>{title}</DialogTitle>}
@@ -137,7 +151,11 @@ const DialogProvider = ({ children }) => {
         {!message ? null : typeof message === "String" ? (
           <DialogContentText>{message}</DialogContentText>
         ) : typeof message === "function" ? (
-          <Message dismissDialog={dismissDialog} />
+          <Message
+            dismissDialog={dismissDialog}
+            setState={setState}
+            state={state}
+          />
         ) : (
           message
         )}
@@ -173,19 +191,23 @@ const DialogProvider = ({ children }) => {
                     enabled={!hidden}
                     invisible={true}
                   >
-                    {keyMap &
-                    (
-                      <ListItemAvatar>
-                        <Avatar>{keyMap}</Avatar>
-                      </ListItemAvatar>
-                    )}
-                    {icon &
-                    (
-                      <ListItemAvatar>
-                        <Avatar>{icon}</Avatar>
-                      </ListItemAvatar>
-                    )}
-                    <ListItemText primary={title} secondary={description} />
+                    {({ badgeContent }) => [
+                      badgeContent && (
+                        <ListItemAvatar key="badgeContent">
+                          <Avatar color="primary">{badgeContent}</Avatar>
+                        </ListItemAvatar>
+                      ),
+                      icon && (
+                        <ListItemAvatar key="icon">
+                          <Avatar>{icon}</Avatar>
+                        </ListItemAvatar>
+                      ),
+                      <ListItemText
+                        key="text"
+                        primary={title}
+                        secondary={description}
+                      />
+                    ]}
                   </KeyboardBadge>
                 </ListItem>
               );
@@ -194,8 +216,14 @@ const DialogProvider = ({ children }) => {
       </DialogContent>
       {!!dialogActions.length && (
         <DialogActions>
-          {dialogActions.map(({ key, title }) => (
-            <Button onClick={() => dismissDialog(key)}>{title}</Button>
+          {dialogActions.map(({ key, title, color, variant }) => (
+            <Button
+              key={"dialog-action-" + key}
+              onClick={() => dismissDialog(key)}
+              {...{ color, variant }}
+            >
+              {title}
+            </Button>
           ))}
         </DialogActions>
       )}
@@ -223,7 +251,7 @@ const useAbortDialog = () => {
   const abortDialog = useCallback(() => {
     setIsDismissable && setIsDismissable(true);
     setIsDialog(false);
-    if (isDismissable) setDismissKey("_reject");
+    if (isDismissable) setDismissKey(REJECT);
     setPre(null);
     setMessage(null);
     setPost(null);
@@ -251,7 +279,8 @@ const useShowDialog = () => {
     setPost,
     setContentStyle,
     setScrollViewStyle,
-    setIsDismissable
+    setIsDismissable,
+    setState
   } = useContext(context);
   const showDialog = useCallback(
     async (
@@ -281,6 +310,7 @@ const useShowDialog = () => {
         setIsDialog(true);
         setIsDismissable(isDismissable);
         setDialogActions(dialogActions);
+        setState({});
         const deferred = new Deferred();
         setPromise(deferred);
         const outkey = await deferred.promise;
@@ -310,8 +340,8 @@ const useShowDialog = () => {
   const [promise, setPromise] = useState(null);
   useEffect(() => {
     if (!promise) return;
-    if (dismissKey === "_reject") {
-      promise.reject("dismisskey was _reject");
+    if (dismissKey === REJECT) {
+      promise.reject("dismisskey was " + REJECT);
       clearDismiss();
       setPromise(null);
     } else if (dismissKey !== null && typeof dismissKey !== "undefined") {
@@ -361,16 +391,13 @@ const useSpinner = () => {
 const useAreYouSure = () => {
   const showDialog = useShowDialog();
   return useCallback(
-    async ({
-      yesText = "Yes I am sure",
-      noText = "Never mind",
-      ...props
-    } = {}) => {
+    async ({ yesText = "Yes", noText = "No", ...props } = {}) => {
       const result = await showDialog({
         dialogActions: [
           {
             title: yesText,
-            key: "yes"
+            key: "yes",
+            color: "primary"
           },
           { title: noText, key: "no" }
         ],
@@ -392,5 +419,7 @@ export {
   withDialog,
   useAbortDialog,
   useSpinner,
-  useAreYouSure
+  useAreYouSure,
+  CUSTOM,
+  REJECT
 };
