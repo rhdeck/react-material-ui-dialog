@@ -294,7 +294,8 @@ const useShowDialog = () => {
         contentStyle = {},
         scrollViewStyle = { maxHeight: 300 },
         isDismissable = true,
-        dialogActions = []
+        dialogActions = [],
+        state
       },
       callback = null
     ) => {
@@ -310,7 +311,7 @@ const useShowDialog = () => {
         setIsDialog(true);
         setIsDismissable(isDismissable);
         setDialogActions(dialogActions);
-        setState({});
+        setState(state ? state : {});
         const deferred = new Deferred();
         setPromise(deferred);
         const outkey = await deferred.promise;
@@ -345,9 +346,9 @@ const useShowDialog = () => {
       clearDismiss();
       setPromise(null);
     } else if (dismissKey !== null && typeof dismissKey !== "undefined") {
-      promise.resolve(dismissKey);
       clearDismiss();
       setPromise(null);
+      promise.resolve(dismissKey);
     }
   }, [dismissKey, promise]);
   return showDialog;
